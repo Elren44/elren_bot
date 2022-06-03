@@ -1,2 +1,5 @@
 .idea
-1.env
+.vscode
+git.env
+Dockerfile
+Makefile

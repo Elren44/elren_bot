@@ -2,10 +2,11 @@ package telegram
 
 import (
 	"fmt"
-	"github.com/Elren44/elren_bot/pkg/cdn"
-	"github.com/Elren44/elren_bot/pkg/grabbing"
 	"strings"
 	"time"
+
+	"github.com/Elren44/elren_bot/pkg/cdn"
+	"github.com/Elren44/elren_bot/pkg/grabbing"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -30,6 +31,7 @@ var menuKeyboiard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("онлайн"),
 		tgbotapi.NewKeyboardButton("игры"),
+		tgbotapi.NewKeyboardButton("поиск везде"),
 	),
 )
 
@@ -38,6 +40,11 @@ func (b *Bot) handleCallback(update tgbotapi.Update) error {
 	delmsg := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, update.Message.MessageID)
 	b.bot.Send(delmsg)
 	switch update.Message.Text {
+	case "поиск везде":
+		if err := b.sendReply(update, "поиск везде"); err != nil {
+			return err
+		}
+		return nil
 	case "игры":
 		if err := b.sendReply(update, "игры"); err != nil {
 			return err
@@ -101,6 +108,8 @@ func (b *Bot) handleTorrentSearch(message *tgbotapi.Message) error {
 		b.searchParameter.Type = grabbing.AllMovie
 	case "игры":
 		b.searchParameter.Type = grabbing.Game
+	case "поиск везде":
+		b.searchParameter.Type = grabbing.AllFiles
 	case "онлайн":
 		if err := b.handleSearchCommand(message); err != nil {
 			msg := tgbotapi.NewMessage(message.Chat.ID, err.Error())
@@ -114,7 +123,7 @@ func (b *Bot) handleTorrentSearch(message *tgbotapi.Message) error {
 	if _, err := b.bot.Send(msg); err != nil {
 		return err
 	}
-	fmt.Println(b.searchParameter.Value, b.searchParameter.Type)
+	fmt.Println(b.searchParameter.Value, b.searchParameter.Type, message.ReplyToMessage.Text)
 	films, err := grabbing.Find(b.searchParameter.Value, b.searchParameter.Type)
 	if err != nil {
 		return err
@@ -191,8 +200,15 @@ func (b *Bot) handleHelpCommand(message *tgbotapi.Message) error {
 //handleSearchCommand search online movie on the Videocdn
 func (b *Bot) handleSearchCommand(message *tgbotapi.Message) error {
 	movie, err := cdn.Videocdn(message.Text, b.config)
+	fmt.Println(message.Text, "онлайн")
 	if err != nil {
 		return err
+	}
+	if len(movie.Data) == 0 {
+		msg := tgbotapi.NewMessage(message.Chat.ID, "Ничего не найдено, проверьте название или попробуйте искать на англ языке")
+		if _, err := b.bot.Send(msg); err != nil {
+			return err
+		}
 	}
 	for i, data := range movie.Data {
 

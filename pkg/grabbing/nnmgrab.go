@@ -17,8 +17,8 @@ type SearchParameter struct {
 
 func NewSearchParameter(t string, v string) *SearchParameter {
 	return &SearchParameter{
-		Type:  "",
-		Value: "",
+		Type:  t,
+		Value: v,
 	}
 }
 
@@ -36,6 +36,7 @@ const (
 	Game            = "c=17&"
 	AllMovie        = "c=14&"
 	Serials         = "c=27&"
+	AllFiles        = ""
 )
 
 type Film struct {
@@ -106,13 +107,13 @@ func nnmAPI(searchString string, searchType string, ch chan Film) ([]Film, error
 	}
 
 	c := colly.NewCollector()
-	err := c.SetProxy(proxy)
-	if err != nil {
-		return filmMap, err
-	}
+	//err := c.SetProxy(proxy)
+	//if err != nil {
+	//	return filmMap, err
+	//}
 	c.MaxDepth = 1
 
-	err = c.Limit(&colly.LimitRule{
+	err := c.Limit(&colly.LimitRule{
 		DomainGlob:  "nnmclub.ro/*",
 		Parallelism: 2,
 		// Set a delay between requests to these domains
@@ -167,11 +168,11 @@ func searchForm(searchString string, searchType string, ch chan Film) error {
 	}
 
 	cFile := colly.NewCollector()
-	err := cFile.SetProxy(proxy)
-	if err != nil {
-		return err
-	}
-	err = cFile.Limit(&colly.LimitRule{
+	//err := cFile.SetProxy(proxy)
+	//if err != nil {
+	//	return err
+	//}
+	err := cFile.Limit(&colly.LimitRule{
 		Parallelism: 2,
 		// Filter domains affected by this rule
 		DomainGlob: "nnmclub.ro/*",

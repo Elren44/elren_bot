@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Elren44/elren_bot/configs"
-	"github.com/Elren44/elren_bot/pkg/telegram"
+	"github.com/Elren44/elren_bot/internal/telegram"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 

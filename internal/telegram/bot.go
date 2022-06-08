@@ -1,10 +1,10 @@
 package telegram
 
 import (
-	"github.com/Elren44/elren_bot/pkg/grabbing"
 	"log"
 
 	"github.com/Elren44/elren_bot/configs"
+	"github.com/Elren44/elren_bot/internal/grabbing"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 

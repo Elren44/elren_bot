@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Elren44/elren_bot/pkg/cdn"
-	"github.com/Elren44/elren_bot/pkg/grabbing"
+	"github.com/Elren44/elren_bot/internal/grabbing"
+	"github.com/Elren44/elren_bot/internal/video_db"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -15,23 +15,34 @@ const (
 	commandStart  = "start"
 	commandSearch = "s"
 	commandHelp   = "help"
+
+	//button const
+	FOREIGH_CARTOON  = "иностр. мульт"
+	RUS_CARTOON      = "русский мульт"
+	RUS_MOVIE        = "русский фильм"
+	FOREIGH_MOVIE    = "иностр. фильм"
+	TV_SERIAL        = "сериал"
+	ALL_VIDEO        = "все видео"
+	ONLINE           = "онлайн"
+	GAMES            = "игры"
+	SEARCH_EVERYWERE = "поиск везде"
 )
 
 var menuKeyboiard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("иностр. мульт"),
-		tgbotapi.NewKeyboardButton("русский мульт"),
-		tgbotapi.NewKeyboardButton("русский фильм"),
+		tgbotapi.NewKeyboardButton(FOREIGH_CARTOON),
+		tgbotapi.NewKeyboardButton(RUS_CARTOON),
+		tgbotapi.NewKeyboardButton(RUS_MOVIE),
 	),
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("иностр. фильм"),
-		tgbotapi.NewKeyboardButton("сериал"),
-		tgbotapi.NewKeyboardButton("все видео"),
+		tgbotapi.NewKeyboardButton(FOREIGH_MOVIE),
+		tgbotapi.NewKeyboardButton(TV_SERIAL),
+		tgbotapi.NewKeyboardButton(ALL_VIDEO),
 	),
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("онлайн"),
-		tgbotapi.NewKeyboardButton("игры"),
-		tgbotapi.NewKeyboardButton("поиск везде"),
+		tgbotapi.NewKeyboardButton(ONLINE),
+		tgbotapi.NewKeyboardButton(GAMES),
+		tgbotapi.NewKeyboardButton(SEARCH_EVERYWERE),
 	),
 )
 
@@ -40,48 +51,48 @@ func (b *Bot) handleCallback(update tgbotapi.Update) error {
 	delmsg := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, update.Message.MessageID)
 	b.bot.Send(delmsg)
 	switch update.Message.Text {
-	case "поиск везде":
-		if err := b.sendReply(update, "поиск везде"); err != nil {
+	case FOREIGH_CARTOON:
+		if err := b.sendReply(update, FOREIGH_CARTOON); err != nil {
 			return err
 		}
 		return nil
-	case "игры":
-		if err := b.sendReply(update, "игры"); err != nil {
+	case RUS_CARTOON:
+		if err := b.sendReply(update, RUS_CARTOON); err != nil {
 			return err
 		}
 		return nil
-	case "онлайн":
-		if err := b.sendReply(update, "онлайн"); err != nil {
+	case RUS_MOVIE:
+		if err := b.sendReply(update, RUS_MOVIE); err != nil {
 			return err
 		}
 		return nil
-	case "все видео":
-		if err := b.sendReply(update, "все видео"); err != nil {
+	case FOREIGH_MOVIE:
+		if err := b.sendReply(update, FOREIGH_MOVIE); err != nil {
 			return err
 		}
 		return nil
-	case "сериал":
-		if err := b.sendReply(update, "сериал"); err != nil {
+	case TV_SERIAL:
+		if err := b.sendReply(update, TV_SERIAL); err != nil {
 			return err
 		}
 		return nil
-	case "иностр. фильм":
-		if err := b.sendReply(update, "иностр. фильм"); err != nil {
+	case ALL_VIDEO:
+		if err := b.sendReply(update, ALL_VIDEO); err != nil {
 			return err
 		}
 		return nil
-	case "русский фильм":
-		if err := b.sendReply(update, "русский фильм"); err != nil {
+	case ONLINE:
+		if err := b.sendReply(update, ONLINE); err != nil {
 			return err
 		}
 		return nil
-	case "русский мульт":
-		if err := b.sendReply(update, "русский мульт"); err != nil {
+	case GAMES:
+		if err := b.sendReply(update, GAMES); err != nil {
 			return err
 		}
 		return nil
-	case "иностр. мульт":
-		if err := b.sendReply(update, "иностр. мульт"); err != nil {
+	case SEARCH_EVERYWERE:
+		if err := b.sendReply(update, SEARCH_EVERYWERE); err != nil {
 			return err
 		}
 		return nil
@@ -94,23 +105,23 @@ func (b *Bot) handleCallback(update tgbotapi.Update) error {
 func (b *Bot) handleTorrentSearch(message *tgbotapi.Message) error {
 	b.searchParameter.Value = message.Text
 	switch message.ReplyToMessage.Text {
-	case "иностр. мульт":
+	case FOREIGH_CARTOON:
 		b.searchParameter.Type = grabbing.ForeignCartoons
-	case "русский мульт":
+	case RUS_CARTOON:
 		b.searchParameter.Type = grabbing.RussianCartoons
-	case "русский фильм":
+	case RUS_MOVIE:
 		b.searchParameter.Type = grabbing.RussianMovie
-	case "иностр. фильм":
+	case FOREIGH_MOVIE:
 		b.searchParameter.Type = grabbing.ForeignMovie
-	case "сериал":
+	case TV_SERIAL:
 		b.searchParameter.Type = grabbing.Serials
-	case "все видео":
+	case ALL_VIDEO:
 		b.searchParameter.Type = grabbing.AllMovie
-	case "игры":
+	case GAMES:
 		b.searchParameter.Type = grabbing.Game
-	case "поиск везде":
+	case SEARCH_EVERYWERE:
 		b.searchParameter.Type = grabbing.AllFiles
-	case "онлайн":
+	case ONLINE:
 		if err := b.handleSearchCommand(message); err != nil {
 			msg := tgbotapi.NewMessage(message.Chat.ID, err.Error())
 			if _, err := b.bot.Send(msg); err != nil {
@@ -199,7 +210,7 @@ func (b *Bot) handleHelpCommand(message *tgbotapi.Message) error {
 
 //handleSearchCommand search online movie on the Videocdn
 func (b *Bot) handleSearchCommand(message *tgbotapi.Message) error {
-	movie, err := cdn.Videocdn(message.Text, b.config)
+	movie, err := video_db.Videocdn(message.Text, b.config)
 	fmt.Println(message.Text, "онлайн")
 	if err != nil {
 		return err
@@ -231,7 +242,7 @@ func (b *Bot) handleSearchCommand(message *tgbotapi.Message) error {
 		if _, err := b.bot.Send(m); err != nil {
 			return fmt.Errorf("failed to send message: %w", err)
 		}
-		imgLink := cdn.GrabPoster(data.ImdbID)
+		imgLink := video_db.GrabPoster(data.ImdbID)
 		img := tgbotapi.NewPhoto(message.Chat.ID, tgbotapi.FileURL(imgLink))
 		if _, err := b.bot.Send(img); err != nil {
 			return nil

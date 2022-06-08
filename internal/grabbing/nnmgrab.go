@@ -131,13 +131,13 @@ func nnmAPI(searchString string, searchType string, ch chan Film) ([]Film, error
 			film.date = chEl.date
 			film.addInfo = chEl.addInfo
 
-			h.ForEach(".btTbl", func(i int, h *colly.HTMLElement) {
-				h.ForEach("span[title]", func(i int, h *colly.HTMLElement) {
+			h.ForEach(".btTbl", func(_ int, h *colly.HTMLElement) {
+				h.ForEach("span[title]", func(_ int, h *colly.HTMLElement) {
 					if strings.Contains(h.Attr("title"), "Размер") {
 						film.size = h.Text
 					}
 				})
-				h.ForEach("a", func(i int, h *colly.HTMLElement) {
+				h.ForEach("a", func(_ int, h *colly.HTMLElement) {
 					if h.Attr("title") == "Примагнититься" {
 						film.magnet = h.Attr("href")
 					}
@@ -147,7 +147,7 @@ func nnmAPI(searchString string, searchType string, ch chan Film) ([]Film, error
 				})
 			})
 
-			h.ForEach(".maintitle", func(i int, h *colly.HTMLElement) {
+			h.ForEach(".maintitle", func(_ int, h *colly.HTMLElement) {
 				film.title = h.Text
 			})
 
@@ -189,9 +189,9 @@ func searchForm(searchString string, searchType string, ch chan Film) error {
 		var tempFilm Film
 
 		cFile.OnHTML(".tablesorter", func(h *colly.HTMLElement) {
-			h.ForEach("tbody", func(i int, h *colly.HTMLElement) {
-				h.ForEach("tr", func(i int, h *colly.HTMLElement) {
-					h.ForEach("td[title]", func(i int, h *colly.HTMLElement) {
+			h.ForEach("tbody", func(_ int, h *colly.HTMLElement) {
+				h.ForEach("tr", func(_ int, h *colly.HTMLElement) {
+					h.ForEach("td[title]", func(_ int, h *colly.HTMLElement) {
 						if h.Attr("title") == "Добавлено" {
 							tempFilm.date = h.Text[11:21]
 						}
@@ -204,12 +204,15 @@ func searchForm(searchString string, searchType string, ch chan Film) error {
 			})
 		})
 
-		cFile.OnError(func(r *colly.Response, e error) {
+		cFile.OnError(func(_ *colly.Response, e error) {
 			fmt.Println(e.Error())
 		})
 
 		searchString = "nm=" + searchString
-		cFile.Visit(baseSearchLine + searchType + searchString)
+		err := cFile.Visit(baseSearchLine + searchType + searchString)
+		if err != nil {
+			fmt.Println(err)
+		}
 		close(ch)
 	}(ch)
 

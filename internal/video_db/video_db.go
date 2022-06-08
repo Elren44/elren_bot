@@ -1,4 +1,4 @@
-package cdn
+package video_db
 
 import (
 	"encoding/json"
@@ -48,11 +48,14 @@ func GrabPoster(id string) string {
 	c := colly.NewCollector()
 
 	c.OnHTML(".ipc-poster--baseAlt", func(h *colly.HTMLElement) {
-		h.ForEach(".ipc-media > img", func(i int, h *colly.HTMLElement) {
+		h.ForEach(".ipc-media > img", func(_ int, h *colly.HTMLElement) {
 			link = h.Attr("src")
 		})
 	})
 
-	c.Visit("https://www.imdb.com/title/" + id + "/")
+	err := c.Visit("https://www.imdb.com/title/" + id + "/")
+	if err != nil {
+		fmt.Println(err)
+	}
 	return link
 }

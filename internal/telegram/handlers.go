@@ -17,6 +17,7 @@ const (
 	commandHelp   = "help"
 
 	//button const
+	NEW_MOVIE        = "новинки (хуже качество)"
 	FOREIGH_CARTOON  = "иностр. мульт"
 	RUS_CARTOON      = "русский мульт"
 	RUS_MOVIE        = "русский фильм"
@@ -28,7 +29,12 @@ const (
 	SEARCH_EVERYWERE = "поиск везде"
 )
 
+var films = make(map[int64][]grabbing.Film)
+
 var menuKeyboiard = tgbotapi.NewReplyKeyboard(
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton(NEW_MOVIE),
+	),
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton(FOREIGH_CARTOON),
 		tgbotapi.NewKeyboardButton(RUS_CARTOON),
@@ -51,6 +57,11 @@ func (b *Bot) handleCallback(update tgbotapi.Update) error {
 	delmsg := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, update.Message.MessageID)
 	b.bot.Send(delmsg)
 	switch update.Message.Text {
+	case NEW_MOVIE:
+		if err := b.sendReply(update, NEW_MOVIE); err != nil {
+			return err
+		}
+		return nil
 	case FOREIGH_CARTOON:
 		if err := b.sendReply(update, FOREIGH_CARTOON); err != nil {
 			return err
@@ -105,6 +116,8 @@ func (b *Bot) handleCallback(update tgbotapi.Update) error {
 func (b *Bot) handleTorrentSearch(message *tgbotapi.Message) error {
 	b.searchParameter.Value = message.Text
 	switch message.ReplyToMessage.Text {
+	case NEW_MOVIE:
+		b.searchParameter.Type = grabbing.NewMovies
 	case FOREIGH_CARTOON:
 		b.searchParameter.Type = grabbing.ForeignCartoons
 	case RUS_CARTOON:
@@ -134,12 +147,50 @@ func (b *Bot) handleTorrentSearch(message *tgbotapi.Message) error {
 	if _, err := b.bot.Send(msg); err != nil {
 		return err
 	}
+	var err error
 	fmt.Println(b.searchParameter.Value, b.searchParameter.Type, message.ReplyToMessage.Text)
-	films, err := grabbing.Find(b.searchParameter.Value, b.searchParameter.Type)
+	filmsArr, err := grabbing.Find(b.searchParameter.Value, b.searchParameter.Type)
 	if err != nil {
 		return err
 	}
-	str := ""
+	var filmsArr2 []grabbing.Film
+	if b.searchParameter.Type == grabbing.ForeignCartoons {
+		filmsArr2, err = grabbing.Find(b.searchParameter.Value, grabbing.ForeignCartoons3d)
+		if err != nil {
+			return err
+		}
+	} else if b.searchParameter.Type == grabbing.NewMovies {
+		filmsArr2, err = grabbing.Find(b.searchParameter.Value, grabbing.Screener)
+		if err != nil {
+			return err
+		}
+	}
+	filmsArr = append(filmsArr, filmsArr2...)
+	films[message.From.ID] = filmsArr
+	if len(films) == 0 {
+		msg := tgbotapi.NewMessage(message.Chat.ID, "Ничего не найдено, проверьте название, попробуйте искать во всех видео, англ языке или онлайн")
+		if _, err := b.bot.Send(msg); err != nil {
+			return err
+		}
+		testMsg := tgbotapi.NewMessage(message.Chat.ID, "выберите категорию для поиска")
+		testMsg.ReplyMarkup = menuKeyboiard
+		if _, err := b.bot.Send(testMsg); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	ikb := tgbotapi.NewInlineKeyboardButtonData("Список", "films")
+
+	ikm := tgbotapi.NewInlineKeyboardMarkup(tgbotapi.NewInlineKeyboardRow(ikb))
+
+	// ms := tgbotapi.NewMessage(message.Chat.ID, "")
+	ms := tgbotapi.NewMessage(message.Chat.ID, "Нажмите кнопку чтобы увидеть весь список")
+	ms.ReplyMarkup = ikm
+	if _, err := b.bot.Send(ms); err != nil {
+		return err
+	}
+	/* str := ""
 	for _, f := range films {
 
 		str, err = grabbing.SprintFilm(f)
@@ -153,12 +204,12 @@ func (b *Bot) handleTorrentSearch(message *tgbotapi.Message) error {
 		if _, err := b.bot.Send(msgFilms); err != nil {
 			return err
 		}
-	}
-	testMsg := tgbotapi.NewMessage(message.Chat.ID, "выберите категорию для поиска")
-	testMsg.ReplyMarkup = menuKeyboiard
-	if _, err := b.bot.Send(testMsg); err != nil {
-		return err
-	}
+	} */
+	// testMsg := tgbotapi.NewMessage(message.Chat.ID, "выберите категорию для поиска")
+	// testMsg.ReplyMarkup = menuKeyboiard
+	// if _, err := b.bot.Send(testMsg); err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
@@ -242,10 +293,17 @@ func (b *Bot) handleSearchCommand(message *tgbotapi.Message) error {
 		if _, err := b.bot.Send(m); err != nil {
 			return fmt.Errorf("failed to send message: %w", err)
 		}
-		imgLink := video_db.GrabPoster(data.ImdbID)
-		img := tgbotapi.NewPhoto(message.Chat.ID, tgbotapi.FileURL(imgLink))
-		if _, err := b.bot.Send(img); err != nil {
-			return nil
+		imgLink, err := video_db.GrabPoster(data.ImdbID)
+		if err == nil {
+			img := tgbotapi.NewPhoto(message.Chat.ID, tgbotapi.FileURL(imgLink))
+			if _, err := b.bot.Send(img); err != nil {
+				return nil
+			}
+		} else {
+			msg := tgbotapi.NewMessage(message.Chat.ID, "К сожелению постера не найдено.")
+			if _, err := b.bot.Send(msg); err != nil {
+				return err
+			}
 		}
 
 		if i != len(movie.Data)-1 {

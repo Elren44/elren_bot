@@ -43,7 +43,7 @@ func Videocdn(title string, cfg *configs.Config) (*Movie, error) {
 }
 
 //GrabPoster find link on film poster
-func GrabPoster(id string) string {
+func GrabPoster(id string) (string, error) {
 	var link string
 	c := colly.NewCollector()
 
@@ -55,7 +55,7 @@ func GrabPoster(id string) string {
 
 	err := c.Visit("https://www.imdb.com/title/" + id + "/")
 	if err != nil {
-		fmt.Println(err)
+		return link, err
 	}
-	return link
+	return link, nil
 }

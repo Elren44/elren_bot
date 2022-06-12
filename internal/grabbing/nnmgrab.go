@@ -28,15 +28,18 @@ const (
 	baseSearchLine = "https://nnmclub.ro/forum/tracker.php?"
 
 	//search codes
-	ForeignCartoons = "f=661&"
-	RussianCartoons = "f=1332&"
-	AllCartoons     = "c=26&"
-	ForeignMovie    = "f=227&"
-	RussianMovie    = "f=221&"
-	Game            = "c=17&"
-	AllMovie        = "c=14&"
-	Serials         = "c=27&"
-	AllFiles        = ""
+	NewMovies         = "f=954&"
+	Screener          = "f=217&"
+	ForeignCartoons   = "f=1339&"
+	ForeignCartoons3d = "f=1339&"
+	RussianCartoons   = "f=1332&"
+	AllCartoons       = "c=26&"
+	ForeignMovie      = "f=227&"
+	RussianMovie      = "f=221&"
+	Game              = "c=17&"
+	AllMovie          = "c=14&"
+	Serials           = "c=27&"
+	AllFiles          = ""
 )
 
 type Film struct {
@@ -46,16 +49,16 @@ type Film struct {
 	magnet    string
 	size      string
 	tFileLink string
-	title     string
+	Title     string
 }
 
 //SprintFilm return format string for telegram message with movie info
 func SprintFilm(film Film) (string, error) {
-	if film.title == "" {
+	if film.Title == "" {
 		return "", errors.New("not found")
 	}
 	return fmt.Sprintf("Название: %s\nРазмер: %s\nНа торренте с: %s\nДоп. инфо: %s\nМагнет ссылка: %s\nТоррент файл: %s\n",
-		film.title, film.size, film.date, film.addInfo, film.magnet, film.tFileLink), nil
+		film.Title, film.size, film.date, film.addInfo, film.magnet, film.tFileLink), nil
 }
 
 //findDuplicate find duplicates in result search
@@ -75,7 +78,7 @@ func findDuplicate(arr []Film) []Film {
 //printToStdout printing result search to stdout
 func printToStdout(result []Film) {
 	for _, el := range result {
-		fmt.Println(el.title)
+		fmt.Println(el.Title)
 		fmt.Println("\t--size\t:", el.size)
 		fmt.Println("\t--date\t:", el.date)
 		fmt.Println("\t--audio\t:", el.addInfo)
@@ -116,6 +119,7 @@ func nnmAPI(searchString string, searchType string, ch chan Film) ([]Film, error
 	err := c.Limit(&colly.LimitRule{
 		DomainGlob:  "nnmclub.ro/*",
 		Parallelism: 2,
+
 		// Set a delay between requests to these domains
 		Delay: 1 * time.Second,
 		// Add a random delay
@@ -148,7 +152,7 @@ func nnmAPI(searchString string, searchType string, ch chan Film) ([]Film, error
 			})
 
 			h.ForEach(".maintitle", func(_ int, h *colly.HTMLElement) {
-				film.title = h.Text
+				film.Title = h.Text
 			})
 
 			filmMap = append(filmMap, film)

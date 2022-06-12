@@ -29,6 +29,23 @@ func (b *Bot) initChannel() tgbotapi.UpdatesChannel {
 
 func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 	for update := range updates {
+		if update.CallbackQuery != nil {
+			film := update.CallbackData()
+			if film == "films" {
+				err := b.sendFilms(update.CallbackQuery.Message, films[update.CallbackQuery.From.ID])
+				if err != nil {
+					log.Println(err)
+				}
+			}
+
+			testMsg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "выберите что искать")
+			testMsg.ReplyMarkup = menuKeyboiard
+			if _, err := b.bot.Send(testMsg); err != nil {
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, err.Error())
+
+				b.bot.Send(msg)
+			}
+		}
 		if update.Message == nil { // ignore any non-Message updates
 			continue
 		}
@@ -40,6 +57,7 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 			}
 			continue
 		}
+
 		if update.Message.ReplyToMessage != nil {
 			if err := b.handleTorrentSearch(update.Message); err != nil {
 				if err.Error() != "Bad Request: message text is empty" {
@@ -65,6 +83,7 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 			}
 			continue
 		}
+
 	}
 }
 

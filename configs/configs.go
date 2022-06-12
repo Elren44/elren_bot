@@ -12,9 +12,10 @@ type Config struct {
 }
 
 func InitConfig() (*Config, error) {
-	viper.AddConfigPath(".")
-	viper.SetConfigType("env")
-	viper.SetConfigFile(".env")
+	// viper.AddConfigPath(".")
+	// viper.SetConfigType("env")
+	// viper.SetConfigFile(".env")
+	viper.SetConfigFile("./.env")
 
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
